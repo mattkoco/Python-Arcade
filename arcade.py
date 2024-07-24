@@ -4,7 +4,6 @@ import json
 import os
 import random
 
-# File for storing stats
 STATS_FILE = 'career_stats.json'
 
 def update_stats(game, score):
@@ -18,17 +17,16 @@ def update_stats(game, score):
         with open(STATS_FILE, 'r') as file:
             stats = json.load(file)
 
-    # Update games played
     stats['Games Played'] += 1
-
-    # Update highest score for the specific game
+    
     if game in stats['Highest Scores']:
         if score > stats['Highest Scores'][game]:
             stats['Highest Scores'][game] = score
+            
     else:
         stats['Highest Scores'][game] = score
 
-    # Write the updated stats back to the file
+
     with open(STATS_FILE, 'w') as file:
         json.dump(stats, file, indent=4)
 
@@ -105,7 +103,6 @@ class SnakeGame:
         if head in self.snake[1:] or head[0] < 0 or head[0] >= 400 or head[1] < 0 or head[1] >= 400:
             self.running = False
 
-# Minesweeper Game Class
 class MinesweeperGame:
     def __init__(self, root):
         self.root = root
@@ -218,9 +215,7 @@ class MainMenu:
         self.minesweeper_window = tk.Toplevel(self.root)
         self.minesweeper_app = MinesweeperGame(self.minesweeper_window)
 
-# Create main window
 root = tk.Tk()
 menu = MainMenu(root)
 
-# Start the main loop
 root.mainloop()
