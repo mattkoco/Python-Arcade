@@ -21,7 +21,7 @@ def update_stats(game, score):
     # Update games played
     stats['Games Played'] += 1
 
-    # Update highest score for the specifec game
+    # Update highest score for the specific game
     if game in stats['Highest Scores']:
         if score > stats['Highest Scores'][game]:
             stats['Highest Scores'][game] = score
@@ -76,7 +76,7 @@ class SnakeGame:
             self.root.after(100, self.run_game)
         else:
             self.canvas.create_text(200, 200, text=f"Game Over\nScore: {self.score}", fill="white", font=("Arial", 24))
-            update_stats('Snake Game', self.score)
+            update_stats('Snake Game', self.score)  # Update stats when game ends
 
     def move_snake(self):
         head_x, head_y = self.snake[0]
@@ -99,11 +99,81 @@ class SnakeGame:
             self.snake.append(self.snake[-1])
             self.food = (random.randint(0, 39) * 10, random.randint(0, 39) * 10)
             self.draw_food()
-            self.score += 10
-            self.update_score()
+            self.score += 10  # Increment score
+            self.update_score()  # Update score display
         
         if head in self.snake[1:] or head[0] < 0 or head[0] >= 400 or head[1] < 0 or head[1] >= 400:
             self.running = False
+
+# Minesweeper Game Class
+class MinesweeperGame:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Minesweeper Game")
+        self.frame = tk.Frame(root)
+        self.frame.pack()
+
+        self.grid_size = 10
+        self.num_mines = 10
+        self.buttons = [[None for _ in range(self.grid_size)] for _ in range(self.grid_size)]
+        self.mines = set()
+        self.revealed = set()
+        self.mine_positions = []
+
+        self.setup_grid()
+        self.place_mines()
+        self.calculate_numbers()
+        self.game_over = False
+
+    def setup_grid(self):
+        for i in range(self.grid_size):
+            for j in range(self.grid_size):
+                button = tk.Button(self.frame, width=4, height=2, command=lambda x=i, y=j: self.reveal(x, y))
+                button.grid(row=i, column=j)
+                self.buttons[i][j] = button
+
+    def place_mines(self):
+        self.mines.clear()
+        while len(self.mines) < self.num_mines:
+            x, y = random.randint(0, self.grid_size-1), random.randint(0, self.grid_size-1)
+            if (x, y) not in self.mines:
+                self.mines.add((x, y))
+                self.mine_positions.append((x, y))
+
+    def calculate_numbers(self):
+        self.numbers = [[0 for _ in range(self.grid_size)] for _ in range(self.grid_size)]
+        for x, y in self.mines:
+            for i in range(max(0, x-1), min(self.grid_size, x+2)):
+                for j in range(max(0, y-1), min(self.grid_size, y+2)):
+                    if (i, j) != (x, y):
+                        self.numbers[i][j] += 1
+
+    def reveal(self, x, y):
+        if (x, y) in self.revealed or self.game_over:
+            return
+
+        if (x, y) in self.mines:
+            self.end_game(False)
+            return
+
+        self.revealed.add((x, y))
+        self.buttons[x][y].config(text=self.numbers[x][y] if self.numbers[x][y] > 0 else '', relief=tk.SUNKEN, state=tk.DISABLED)
+        
+        if len(self.revealed) == self.grid_size * self.grid_size - len(self.mines):
+            self.end_game(True)
+            return
+
+        if self.numbers[x][y] == 0:
+            for i in range(max(0, x-1), min(self.grid_size, x+2)):
+                for j in range(max(0, y-1), min(self.grid_size, y+2)):
+                    self.reveal(i, j)
+    
+    def end_game(self, won):
+        self.game_over = True
+        for x, y in self.mines:
+            self.buttons[x][y].config(text='*', relief=tk.SUNKEN, state=tk.DISABLED)
+        messagebox.showinfo("Game Over", "You Won!" if won else "Game Over! You Hit a Mine")
+        update_stats('Minesweeper', len(self.revealed))  # Update stats
 
 class MainMenu:
     def __init__(self, root):
@@ -111,9 +181,11 @@ class MainMenu:
         self.root.title("Python Arcade")
         self.root.geometry("400x300")
 
+        # Create buttons
         self.view_stats_button = tk.Button(root, text="View Career Stats", command=self.view_stats)
         self.select_game_button = tk.Button(root, text="Select Game", command=self.select_game)
 
+        # Place buttons in the window
         self.view_stats_button.pack(pady=20)
         self.select_game_button.pack(pady=20)
 
@@ -135,13 +207,20 @@ class MainMenu:
         self.select_game_window.title("Select Game")
         self.select_game_window.geometry("300x200")
         
-        tk.Button(self.select_game_window, text="Snake Game", command=self.start_snake_game).pack(pady=20)
+        tk.Button(self.select_game_window, text="Snake Game", command=self.start_snake_game).pack(pady=10)
+        tk.Button(self.select_game_window, text="Minesweeper", command=self.start_minesweeper_game).pack(pady=10)
 
     def start_snake_game(self):
         self.snake_window = tk.Toplevel(self.root)
         self.snake_app = SnakeGame(self.snake_window)
 
+    def start_minesweeper_game(self):
+        self.minesweeper_window = tk.Toplevel(self.root)
+        self.minesweeper_app = MinesweeperGame(self.minesweeper_window)
+
+# Create main window
 root = tk.Tk()
 menu = MainMenu(root)
 
+# Start the main loop
 root.mainloop()
