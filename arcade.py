@@ -18,14 +18,12 @@ def update_stats(game, score):
             stats = json.load(file)
 
     stats['Games Played'] += 1
-    
+
     if game in stats['Highest Scores']:
         if score > stats['Highest Scores'][game]:
             stats['Highest Scores'][game] = score
-            
     else:
         stats['Highest Scores'][game] = score
-
 
     with open(STATS_FILE, 'w') as file:
         json.dump(stats, file, indent=4)
@@ -74,7 +72,7 @@ class SnakeGame:
             self.root.after(100, self.run_game)
         else:
             self.canvas.create_text(200, 200, text=f"Game Over\nScore: {self.score}", fill="white", font=("Arial", 24))
-            update_stats('Snake Game', self.score)  # Update stats when game ends
+            update_stats('Snake Game', self.score)  
 
     def move_snake(self):
         head_x, head_y = self.snake[0]
@@ -97,8 +95,8 @@ class SnakeGame:
             self.snake.append(self.snake[-1])
             self.food = (random.randint(0, 39) * 10, random.randint(0, 39) * 10)
             self.draw_food()
-            self.score += 10  # Increment score
-            self.update_score()  # Update score display
+            self.score += 10 
+            self.update_score()
         
         if head in self.snake[1:] or head[0] < 0 or head[0] >= 400 or head[1] < 0 or head[1] >= 400:
             self.running = False
@@ -170,7 +168,51 @@ class MinesweeperGame:
         for x, y in self.mines:
             self.buttons[x][y].config(text='*', relief=tk.SUNKEN, state=tk.DISABLED)
         messagebox.showinfo("Game Over", "You Won!" if won else "Game Over! You Hit a Mine")
-        update_stats('Minesweeper', len(self.revealed))  # Update stats
+        update_stats('Minesweeper', len(self.revealed))
+
+class TicTacToeGame:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Tic Tac Toe")
+        self.board = ['' for _ in range(9)]
+        self.current_player = "X"
+        self.buttons = []
+        self.game_over = False
+        self.create_board()
+
+    def create_board(self):
+        for i in range(9):
+            button = tk.Button(self.root, text="", font=("Arial", 20), width=5, height=2, command=lambda i=i: self.make_move(i))
+            button.grid(row=i//3, column=i%3)
+            self.buttons.append(button)
+
+    def make_move(self, index):
+        if self.board[index] == '' and not self.game_over:
+            self.board[index] = self.current_player
+            self.buttons[index].config(text=self.current_player)
+            if self.check_winner():
+                self.end_game(f"Player {self.current_player} wins!")
+                update_stats('Tic Tac Toe', 1)  # Updtae stats for a win
+            elif '' not in self.board:
+                self.end_game("It's a tie!")
+                update_stats('Tic Tac Toe', 0)  # Update stats for a tie
+            else:
+                self.current_player = "O" if self.current_player == "X" else "X"
+
+    def check_winner(self):
+        winning_combinations = [
+            (0, 1, 2), (3, 4, 5), (6, 7, 8),  # Horizontal
+            (0, 3, 6), (1, 4, 7), (2, 5, 8),  # Vertical
+            (0, 4, 8), (2, 4, 6)              # Diagonal
+        ]
+        for combo in winning_combinations:
+            if self.board[combo[0]] == self.board[combo[1]] == self.board[combo[2]] != '':
+                return True
+        return False
+
+    def end_game(self, message):
+        self.game_over = True
+        messagebox.showinfo("Game Over", message)
 
 class MainMenu:
     def __init__(self, root):
@@ -178,11 +220,9 @@ class MainMenu:
         self.root.title("Python Arcade")
         self.root.geometry("400x300")
 
-        # Create buttons
         self.view_stats_button = tk.Button(root, text="View Career Stats", command=self.view_stats)
         self.select_game_button = tk.Button(root, text="Select Game", command=self.select_game)
 
-        # Place buttons in the window
         self.view_stats_button.pack(pady=20)
         self.select_game_button.pack(pady=20)
 
@@ -206,6 +246,7 @@ class MainMenu:
         
         tk.Button(self.select_game_window, text="Snake Game", command=self.start_snake_game).pack(pady=10)
         tk.Button(self.select_game_window, text="Minesweeper", command=self.start_minesweeper_game).pack(pady=10)
+        tk.Button(self.select_game_window, text="Tic Tac Toe", command=self.start_tic_tac_toe_game).pack(pady=10)
 
     def start_snake_game(self):
         self.snake_window = tk.Toplevel(self.root)
@@ -214,6 +255,11 @@ class MainMenu:
     def start_minesweeper_game(self):
         self.minesweeper_window = tk.Toplevel(self.root)
         self.minesweeper_app = MinesweeperGame(self.minesweeper_window)
+
+    def start_tic_tac_toe_game(self):
+        self.tic_tac_toe_window = tk.Toplevel(self.root)
+        self.tic_tac_toe_app = TicTacToeGame(self.tic_tac_toe_window)
+
 
 root = tk.Tk()
 menu = MainMenu(root)
