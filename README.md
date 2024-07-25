@@ -1,10 +1,10 @@
 # Python-Arcade
 Arcade made in Python
 
-# Planned features:
+# features:
 - Stats view
 - Games
   - Snake
   - Minesweeper
-  - + more
+  - Tic-Tac-toe
 - All made w/ Tkinter interface
